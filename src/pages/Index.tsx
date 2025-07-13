@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 import ProductComparison from "@/components/ProductComparison";
 import SupermarketFilter from "@/components/SupermarketFilter";
 import PopularProducts from "@/components/PopularProducts";
@@ -34,10 +35,24 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <ShoppingCart className="h-8 w-8 text-blue-600" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+              <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
                 PrixCompare
-              </h1>
+              </Link>
             </div>
+            
+            {/* Navigation Menu */}
+            <nav className="hidden md:flex items-center space-x-6">
+              <Link to="/categories" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                Catégories
+              </Link>
+              <Link to="/supermarkets" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                Supermarchés
+              </Link>
+              <Link to="/" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                Comparateur
+              </Link>
+            </nav>
+
             <div className="flex items-center space-x-4">
               <Badge variant="secondary" className="bg-green-100 text-green-700">
                 <TrendingDown className="h-4 w-4 mr-1" />
@@ -145,12 +160,11 @@ const Index = () => {
               </p>
             </div>
             <div>
-              <h3 className="font-semibold mb-4">Supermarchés</h3>
+              <h3 className="font-semibold mb-4">Navigation</h3>
               <ul className="space-y-2 text-gray-400">
-                <li>Carrefour</li>
-                <li>Leclerc</li>
-                <li>Auchan</li>
-                <li>Intermarché</li>
+                <li><Link to="/categories" className="hover:text-white transition-colors">Catégories</Link></li>
+                <li><Link to="/supermarkets" className="hover:text-white transition-colors">Supermarchés</Link></li>
+                <li><Link to="/" className="hover:text-white transition-colors">Comparateur</Link></li>
               </ul>
             </div>
             <div>
