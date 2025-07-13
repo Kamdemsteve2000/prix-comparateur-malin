@@ -177,7 +177,7 @@ const ProductComparison = ({ searchQuery, selectedSupermarkets }: ProductCompari
     const bestPrice = getBestPrice(prices);
     const worstPrice = getWorstPrice(prices);
     if (bestPrice && worstPrice) {
-      return ((worstPrice - bestPrice) / worstPrice * 100).toFixed(0);
+      return Math.round((worstPrice - bestPrice) / worstPrice * 100);
     }
     return 0;
   };
