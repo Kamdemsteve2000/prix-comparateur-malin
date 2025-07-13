@@ -1,84 +1,14 @@
 
-import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Star, TrendingDown, ExternalLink, MapPin } from "lucide-react";
-
-interface Product {
-  id: string;
-  name: string;
-  brand: string;
-  description: string;
-  category: string;
-  rating: number;
-  reviewCount: number;
-  prices: {
-    supermarket: string;
-    price: number;
-    originalPrice?: number;
-    discount?: number;
-    availability: boolean;
-    logo: string;
-    address: string;
-  }[];
-}
+import { useProduct } from "@/hooks/useProducts";
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Simulation de données pour la démo
-    const mockProduct: Product = {
-      id: id || "1",
-      name: "Nutella 400g",
-      brand: "Ferrero",
-      description: "Pâte à tartiner aux noisettes et au cacao. Idéale pour le petit-déjeuner ou le goûter. Sans huile de palme.",
-      category: "Petit-déjeuner",
-      rating: 4.5,
-      reviewCount: 1247,
-      prices: [
-        {
-          supermarket: "Leclerc",
-          price: 3.75,
-          availability: true,
-          logo: "/lovable-uploads/leclerc-logo.png",
-          address: "Centre Commercial Leclerc, 123 Rue de la République"
-        },
-        {
-          supermarket: "Carrefour",
-          price: 3.89,
-          originalPrice: 4.29,
-          discount: 9,
-          availability: true,
-          logo: "/lovable-uploads/carrefour-logo.png",
-          address: "Carrefour Hypermarché, 456 Avenue des Champs"
-        },
-        {
-          supermarket: "Intermarché",
-          price: 3.95,
-          availability: false,
-          logo: "/lovable-uploads/intermarche-logo.png",
-          address: "Intermarché Super, 789 Boulevard Central"
-        },
-        {
-          supermarket: "Auchan",
-          price: 4.15,
-          availability: true,
-          logo: "/lovable-uploads/auchan-logo.png",
-          address: "Auchan Hypermarché, 321 Route Nationale"
-        }
-      ]
-    };
-
-    setTimeout(() => {
-      setProduct(mockProduct);
-      setLoading(false);
-    }, 500);
-  }, [id]);
+  const { data: product, isLoading: loading, error } = useProduct(id || '');
 
   if (loading) {
     return (
@@ -98,7 +28,7 @@ const ProductDetail = () => {
     );
   }
 
-  if (!product) {
+  if (error || !product) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center">
         <div className="text-center">
@@ -111,9 +41,10 @@ const ProductDetail = () => {
     );
   }
 
-  const bestPrice = Math.min(...product.prices.filter(p => p.availability).map(p => p.price));
-  const worstPrice = Math.max(...product.prices.filter(p => p.availability).map(p => p.price));
-  const savings = Math.round((worstPrice - bestPrice) / worstPrice * 100);
+  const availablePrices = product.prices.filter(p => p.availability);
+  const bestPrice = availablePrices.length > 0 ? Math.min(...availablePrices.map(p => p.price)) : 0;
+  const worstPrice = availablePrices.length > 0 ? Math.max(...availablePrices.map(p => p.price)) : 0;
+  const savings = worstPrice > 0 ? Math.round((worstPrice - bestPrice) / worstPrice * 100) : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
@@ -152,7 +83,7 @@ const ProductDetail = () => {
                       ))}
                     </div>
                     <span className="text-lg font-medium">{product.rating}</span>
-                    <span className="text-gray-600">({product.reviewCount} avis)</span>
+                    <span className="text-gray-600">({product.review_count} avis)</span>
                   </div>
 
                   <p className="text-gray-700 leading-relaxed">{product.description}</p>
@@ -175,8 +106,12 @@ const ProductDetail = () => {
               </div>
 
               <div className="flex items-center justify-center">
-                <div className="w-64 h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <div className="text-6xl">🛒</div>
+                <div className="w-64 h-64 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                  {product.image_url ? (
+                    <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="text-6xl">🛒</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -192,7 +127,7 @@ const ProductDetail = () => {
             <div className="grid gap-4">
               {product.prices.map((priceInfo) => (
                 <Card
-                  key={priceInfo.supermarket}
+                  key={priceInfo.id}
                   className={`border-2 ${
                     priceInfo.price === bestPrice && priceInfo.availability
                       ? 'border-green-500 bg-green-50'
@@ -204,11 +139,21 @@ const ProductDetail = () => {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center font-bold">
-                          {priceInfo.supermarket.charAt(0)}
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden">
+                          {priceInfo.supermarket.logo_url ? (
+                            <img 
+                              src={priceInfo.supermarket.logo_url} 
+                              alt={priceInfo.supermarket.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className={`w-full h-full ${priceInfo.supermarket.color} flex items-center justify-center text-white font-bold`}>
+                              {priceInfo.supermarket.name.charAt(0)}
+                            </div>
+                          )}
                         </div>
                         <div>
-                          <h3 className="font-semibold text-lg">{priceInfo.supermarket}</h3>
+                          <h3 className="font-semibold text-lg">{priceInfo.supermarket.name}</h3>
                           <div className="flex items-center text-sm text-gray-600">
                             <MapPin className="h-4 w-4 mr-1" />
                             {priceInfo.address}
@@ -219,9 +164,9 @@ const ProductDetail = () => {
                       <div className="text-right">
                         {priceInfo.availability ? (
                           <div className="space-y-2">
-                            {priceInfo.originalPrice && (
+                            {priceInfo.original_price && (
                               <p className="text-sm text-gray-500 line-through">
-                                {priceInfo.originalPrice.toFixed(2)}€
+                                {priceInfo.original_price.toFixed(2)}€
                               </p>
                             )}
                             <p className={`text-2xl font-bold ${

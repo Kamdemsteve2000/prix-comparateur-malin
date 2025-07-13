@@ -1,26 +1,8 @@
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { TrendingDown, TrendingUp, ExternalLink, Star } from "lucide-react";
-
-interface Product {
-  id: string;
-  name: string;
-  brand: string;
-  image: string;
-  prices: {
-    supermarket: string;
-    price: number;
-    originalPrice?: number;
-    discount?: number;
-    availability: boolean;
-    logo: string;
-  }[];
-  category: string;
-  rating: number;
-}
+import { TrendingDown, Star } from "lucide-react";
+import { useProducts } from "@/hooks/useProducts";
 
 interface ProductComparisonProps {
   searchQuery: string;
@@ -28,152 +10,23 @@ interface ProductComparisonProps {
 }
 
 const ProductComparison = ({ searchQuery, selectedSupermarkets }: ProductComparisonProps) => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: products = [], isLoading: loading, error } = useProducts(searchQuery, selectedSupermarkets);
 
-  // Données simulées de produits
-  useEffect(() => {
-    const mockProducts: Product[] = [
-      {
-        id: "1",
-        name: "Nutella 400g",
-        brand: "Ferrero",
-        image: "/lovable-uploads/nutella.png",
-        category: "Petit-déjeuner",
-        rating: 4.5,
-        prices: [
-          {
-            supermarket: "Carrefour",
-            price: 3.89,
-            originalPrice: 4.29,
-            discount: 9,
-            availability: true,
-            logo: "/lovable-uploads/carrefour-logo.png"
-          },
-          {
-            supermarket: "Leclerc",
-            price: 3.75,
-            availability: true,
-            logo: "/lovable-uploads/leclerc-logo.png"
-          },
-          {
-            supermarket: "Auchan",
-            price: 4.15,
-            availability: true,
-            logo: "/lovable-uploads/auchan-logo.png"
-          },
-          {
-            supermarket: "Intermarché",
-            price: 3.95,
-            availability: false,
-            logo: "/lovable-uploads/intermarche-logo.png"
-          }
-        ]
-      },
-      {
-        id: "2",
-        name: "Lait Demi-Écrémé 1L",
-        brand: "Lactel",
-        image: "/lovable-uploads/lait.png",
-        category: "Produits laitiers",
-        rating: 4.2,
-        prices: [
-          {
-            supermarket: "Carrefour",
-            price: 1.25,
-            availability: true,
-            logo: "/lovable-uploads/carrefour-logo.png"
-          },
-          {
-            supermarket: "Leclerc",
-            price: 1.19,
-            availability: true,
-            logo: "/lovable-uploads/leclerc-logo.png"
-          },
-          {
-            supermarket: "Auchan",
-            price: 1.32,
-            availability: true,
-            logo: "/lovable-uploads/auchan-logo.png"
-          },
-          {
-            supermarket: "Intermarché",
-            price: 1.28,
-            availability: true,
-            logo: "/lovable-uploads/intermarche-logo.png"
-          }
-        ]
-      },
-      {
-        id: "3",
-        name: "Pain de Mie Complet",
-        brand: "Harry's",
-        image: "/lovable-uploads/pain.png",
-        category: "Boulangerie",
-        rating: 4.0,
-        prices: [
-          {
-            supermarket: "Carrefour",
-            price: 1.89,
-            originalPrice: 2.15,
-            discount: 12,
-            availability: true,
-            logo: "/lovable-uploads/carrefour-logo.png"
-          },
-          {
-            supermarket: "Leclerc",
-            price: 1.95,
-            availability: true,
-            logo: "/lovable-uploads/leclerc-logo.png"
-          },
-          {
-            supermarket: "Auchan",
-            price: 2.05,
-            availability: true,
-            logo: "/lovable-uploads/auchan-logo.png"
-          },
-          {
-            supermarket: "Intermarché",
-            price: 1.85,
-            availability: true,
-            logo: "/lovable-uploads/intermarche-logo.png"
-          }
-        ]
-      }
-    ];
-
-    // Simulation du chargement
-    setTimeout(() => {
-      let filteredProducts = mockProducts;
-      
-      if (searchQuery) {
-        filteredProducts = mockProducts.filter(product =>
-          product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          product.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          product.category.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-      }
-
-      setProducts(filteredProducts);
-      setLoading(false);
-    }, 1000);
-  }, [searchQuery]);
-
-  const getBestPrice = (prices: Product['prices']) => {
+  const getBestPrice = (prices: any[]) => {
     const availablePrices = prices.filter(p => p.availability);
     return availablePrices.length > 0 
       ? Math.min(...availablePrices.map(p => p.price))
       : null;
   };
 
-  const getWorstPrice = (prices: Product['prices']) => {
+  const getWorstPrice = (prices: any[]) => {
     const availablePrices = prices.filter(p => p.availability);
     return availablePrices.length > 0 
       ? Math.max(...availablePrices.map(p => p.price))
       : null;
   };
 
-  const getSavings = (prices: Product['prices']) => {
+  const getSavings = (prices: any[]) => {
     const bestPrice = getBestPrice(prices);
     const worstPrice = getWorstPrice(prices);
     if (bestPrice && worstPrice) {
@@ -181,6 +34,18 @@ const ProductComparison = ({ searchQuery, selectedSupermarkets }: ProductCompari
     }
     return 0;
   };
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-6xl mb-4">⚠️</div>
+        <h3 className="text-2xl font-bold mb-4">Erreur de chargement</h3>
+        <p className="text-gray-600">
+          Impossible de charger les produits. Veuillez réessayer.
+        </p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -218,7 +83,7 @@ const ProductComparison = ({ searchQuery, selectedSupermarkets }: ProductCompari
         <div className="text-6xl mb-4">🔍</div>
         <h3 className="text-2xl font-bold mb-4">Aucun produit trouvé</h3>
         <p className="text-gray-600">
-          Essayez avec d'autres mots-clés comme "Nutella", "lait" ou "pain"
+          Essayez avec d'autres mots-clés
         </p>
       </div>
     );
@@ -239,9 +104,6 @@ const ProductComparison = ({ searchQuery, selectedSupermarkets }: ProductCompari
         {products.map((product) => {
           const bestPrice = getBestPrice(product.prices);
           const savings = getSavings(product.prices);
-          const filteredPrices = selectedSupermarkets.length > 0
-            ? product.prices.filter(p => selectedSupermarkets.includes(p.supermarket))
-            : product.prices;
 
           return (
             <Card key={product.id} className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
@@ -250,7 +112,11 @@ const ProductComparison = ({ searchQuery, selectedSupermarkets }: ProductCompari
                   {/* Product Info */}
                   <div className="flex items-start space-x-4">
                     <div className="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-                      <div className="text-4xl">🛒</div>
+                      {product.image_url ? (
+                        <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="text-4xl">🛒</div>
+                      )}
                     </div>
                     <div className="flex-1">
                       <h4 className="text-xl font-bold mb-1">{product.name}</h4>
@@ -287,9 +153,9 @@ const ProductComparison = ({ searchQuery, selectedSupermarkets }: ProductCompari
                   {/* Price Comparison */}
                   <div className="flex-1">
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                      {filteredPrices.map((priceInfo) => (
+                      {product.prices.map((priceInfo) => (
                         <Card
-                          key={priceInfo.supermarket}
+                          key={priceInfo.id}
                           className={`border-2 transition-all duration-200 ${
                             priceInfo.price === bestPrice && priceInfo.availability
                               ? 'border-green-500 bg-green-50'
@@ -299,18 +165,28 @@ const ProductComparison = ({ searchQuery, selectedSupermarkets }: ProductCompari
                           }`}
                         >
                           <CardContent className="p-4 text-center">
-                            <div className="w-8 h-8 mx-auto mb-2 bg-gray-200 rounded flex items-center justify-center text-xs font-bold">
-                              {priceInfo.supermarket.charAt(0)}
+                            <div className="w-8 h-8 mx-auto mb-2 rounded flex items-center justify-center text-xs font-bold overflow-hidden">
+                              {priceInfo.supermarket.logo_url ? (
+                                <img 
+                                  src={priceInfo.supermarket.logo_url} 
+                                  alt={priceInfo.supermarket.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className={`w-full h-full ${priceInfo.supermarket.color} flex items-center justify-center text-white`}>
+                                  {priceInfo.supermarket.name.charAt(0)}
+                                </div>
+                              )}
                             </div>
                             <p className="text-xs font-medium mb-2">
-                              {priceInfo.supermarket}
+                              {priceInfo.supermarket.name}
                             </p>
                             {priceInfo.availability ? (
                               <>
                                 <div className="space-y-1">
-                                  {priceInfo.originalPrice && (
+                                  {priceInfo.original_price && (
                                     <p className="text-xs text-gray-500 line-through">
-                                      {priceInfo.originalPrice.toFixed(2)}€
+                                      {priceInfo.original_price.toFixed(2)}€
                                     </p>
                                   )}
                                   <p className={`font-bold ${
